@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation"
 export default function Home() {
   const [showModal, setShowModal] = useState(false)
   const [showQuickGameModal, setShowQuickGameModal] = useState(false)
-  const [maxPoints, setMaxPoints] = useState(25)
+  const [pointsPerSet, setPointsPerSet] = useState(25)
   const router = useRouter()
 
   const handleStartQuickGame = () => {
-    router.push(`/scoreboard?teamA=Time A&teamB=Time B&maxPoints=${maxPoints}`)
+    // --- MUDANÇA AQUI ---
+    // Adicionado &gameType=quick
+    router.push(`/scoreboard?teamA=Time A&teamB=Time B&pointsPerSet=${pointsPerSet}&numSets=5&gameType=quick`)
   }
 
   return (
@@ -73,8 +75,8 @@ export default function Home() {
               <input
                 id="maxPoints"
                 type="number"
-                value={maxPoints}
-                onChange={(e) => setMaxPoints(Number(e.target.value))}
+                value={pointsPerSet}
+                onChange={(e) => setPointsPerSet(Number(e.target.value))}
                 className="w-full text-4xl font-bold text-center border-2 border-gray-300 rounded-xl p-4 focus:outline-none focus:border-teal-500"
                 min="1"
               />

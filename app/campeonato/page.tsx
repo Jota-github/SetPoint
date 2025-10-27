@@ -12,6 +12,8 @@ export default function CampeonatoSetup() {
   const searchParams = useSearchParams()
   const teamAName = searchParams.get("teamA") || "Time A"
   const teamBName = searchParams.get("teamB") || "Time B"
+  const numSets = searchParams.get("numSets") || "3"
+  const pointsPerSet = searchParams.get("pointsPerSet") || "25"
 
   const [activeTab, setActiveTab] = useState<"A" | "B">("A")
   const [teamA, setTeamA] = useState({
@@ -57,7 +59,17 @@ export default function CampeonatoSetup() {
   }
 
   const handleSave = () => {
-    router.push(`/scoreboard?teamA=${encodeURIComponent(teamAName)}&teamB=${encodeURIComponent(teamBName)}`)
+    // --- MUDANÇA AQUI ---
+    // Adicionado gameType: "championship"
+    const params = new URLSearchParams({
+      teamA: teamAName,
+      teamB: teamBName,
+      numSets: numSets,
+      pointsPerSet: pointsPerSet,
+      gameType: "championship",
+    })
+    router.push(`/scoreboard?${params.toString()}`)
+    // --- FIM DA MUDANÇA ---
   }
 
   return (
