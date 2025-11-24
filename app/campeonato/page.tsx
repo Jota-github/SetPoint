@@ -2,6 +2,14 @@
 
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { ArrowLeft, Play, Plus, Shirt, Trash2, User, Volleyball } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 
 interface Player {
   number: string
@@ -17,16 +25,12 @@ export default function CampeonatoSetup() {
 
   const [activeTab, setActiveTab] = useState<"A" | "B">("A")
   const [teamA, setTeamA] = useState({
-    starters: Array(6)
-      .fill(null)
-      .map(() => ({ number: "", name: "" })) as Player[],
+    starters: Array(6).fill(null).map(() => ({ number: "", name: "" })) as Player[],
     substitutes: [] as Player[],
     firstServer: 0,
   })
   const [teamB, setTeamB] = useState({
-    starters: Array(6)
-      .fill(null)
-      .map(() => ({ number: "", name: "" })) as Player[],
+    starters: Array(6).fill(null).map(() => ({ number: "", name: "" })) as Player[],
     substitutes: [] as Player[],
     firstServer: 0,
   })
@@ -54,15 +58,22 @@ export default function CampeonatoSetup() {
     })
   }
 
+  const removeSubstitute = (index: number) => {
+    const newSubstitutes = currentTeam.substitutes.filter((_, i) => i !== index)
+    setCurrentTeam({ ...currentTeam, substitutes: newSubstitutes })
+  }
+
   const setFirstServer = (index: number) => {
     setCurrentTeam({ ...currentTeam, firstServer: index })
   }
 
   const handleSave = () => {
-    // Captura o número do jogador selecionado para o saque inicial
-    // Se o campo estiver vazio, enviamos "0" ou um valor padrão
-    const serverANumber = teamA.starters[teamA.firstServer].number || "?"
-    const serverBNumber = teamB.starters[teamB.firstServer].number || "?"
+    const serverANumber = teamA.starters[teamA.firstServer]?.number || "?"
+    const serverBNumber = teamB.starters[teamB.firstServer]?.number || "?"
+
+    // --- MUDANÇA AQUI: Criando listas de números separados por vírgula ---
+    const playersAList = teamA.starters.map(p => p.number || "?").join(",")
+    const playersBList = teamB.starters.map(p => p.number || "?").join(",")
 
     const params = new URLSearchParams({
       teamA: teamAName,
@@ -70,119 +81,184 @@ export default function CampeonatoSetup() {
       numSets: numSets,
       pointsPerSet: pointsPerSet,
       gameType: "championship",
-      serverA: serverANumber, // Envia sacador A
-      serverB: serverBNumber, // Envia sacador B
+      serverA: serverANumber,
+      serverB: serverBNumber,
+      playersA: playersAList, // Lista Time A
+      playersB: playersBList  // Lista Time B
     })
     router.push(`/scoreboard?${params.toString()}`)
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-md mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 text-center mb-6">Configurar Times</h1>
-
-        {/* Tab Interface */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setActiveTab("A")}
-            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === "A"
-                ? "bg-blue-500 text-white"
-                : "bg-white text-gray-600 border-2 border-gray-200 hover:border-blue-300"
-            }`}
-          >
-            {teamAName}
-          </button>
-          <button
-            onClick={() => setActiveTab("B")}
-            className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
-              activeTab === "B"
-                ? "bg-orange-500 text-white"
-                : "bg-white text-gray-600 border-2 border-gray-200 hover:border-orange-300"
-            }`}
-          >
-            {teamBName}
-          </button>
-        </div>
-
-        {/* Team Content */}
-        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-          {/* Starting 6 */}
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Jogadores Titulares (Starting 6)</h2>
-          <div className="space-y-3 mb-6">
-            {currentTeam.starters.map((player, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={player.number}
-                  onChange={(e) => updateStarter(index, "number", e.target.value)}
-                  className="w-16 px-2 py-2 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:outline-none text-center"
-                  placeholder="N°"
-                  min="0"
-                  max="99"
-                />
-                <input
-                  type="text"
-                  value={player.name}
-                  onChange={(e) => updateStarter(index, "name", e.target.value)}
-                  className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:outline-none"
-                  placeholder="Nome do Jogador"
-                />
-                <div className="flex flex-col items-center">
-                  <label className="text-xs text-gray-600 mb-1">Saque</label>
-                  <input
-                    type="radio"
-                    name={`firstServer-${activeTab}`}
-                    checked={currentTeam.firstServer === index}
-                    onChange={() => setFirstServer(index)}
-                    className="w-5 h-5 text-teal-500 cursor-pointer"
+  const renderTeamForm = (teamType: "A" | "B") => {
+    const teamData = teamType === "A" ? teamA : teamB
+    const isCurrent = activeTab === teamType
+    
+    return (
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-semibold flex items-center gap-2">
+              <Shirt className="w-4 h-4" /> Titulares (Ordem de Rodízio)
+            </Label>
+            <Badge variant="outline" className="text-xs font-normal bg-muted/50">
+              Selecione quem começa sacando
+            </Badge>
+          </div>
+          
+          <div className="grid gap-3">
+            {teamData.starters.map((player, index) => (
+              <div key={index} className="flex items-center gap-3 group">
+                <div className="relative">
+                  <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-xs text-muted-foreground opacity-50 w-4 text-right select-none">
+                    {index + 1}
+                  </span>
+                  <Input
+                    type="number"
+                    value={player.number}
+                    onChange={(e) => isCurrent && updateStarter(index, "number", e.target.value)}
+                    className="w-16 text-center font-mono font-medium"
+                    placeholder="Nº"
+                    min="0"
+                    max="99"
                   />
                 </div>
+                <Input
+                  type="text"
+                  value={player.name}
+                  onChange={(e) => isCurrent && updateStarter(index, "name", e.target.value)}
+                  className="flex-1"
+                  placeholder={`Jogador posição ${index + 1}`}
+                />
+                <Button
+                  type="button"
+                  variant={teamData.firstServer === index ? "default" : "outline"}
+                  size="icon"
+                  className={`shrink-0 transition-all ${
+                    teamData.firstServer === index 
+                      ? (teamType === "A" ? "bg-primary hover:bg-primary/90" : "bg-orange-500 hover:bg-orange-600 text-white hover:text-white") 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  onClick={() => isCurrent && setFirstServer(index)}
+                  title="Definir como primeiro sacador"
+                >
+                  <Volleyball className="w-4 h-4" />
+                </Button>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* Substitutes */}
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Reservas</h2>
-          <div className="space-y-3 mb-4">
-            {currentTeam.substitutes.map((substitute, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
+        <div className="space-y-4">
+          <Label className="text-base font-semibold flex items-center gap-2">
+            <User className="w-4 h-4" /> Reservas
+          </Label>
+          
+          <div className="grid gap-3">
+            {teamData.substitutes.map((substitute, index) => (
+              <div key={index} className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
+                <Input
                   type="number"
                   value={substitute.number}
-                  onChange={(e) => updateSubstitute(index, "number", e.target.value)}
-                  className="w-16 px-2 py-2 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:outline-none text-center"
-                  placeholder="N°"
+                  onChange={(e) => isCurrent && updateSubstitute(index, "number", e.target.value)}
+                  className="w-16 text-center font-mono"
+                  placeholder="Nº"
                   min="0"
                   max="99"
                 />
-                <input
+                <Input
                   type="text"
                   value={substitute.name}
-                  onChange={(e) => updateSubstitute(index, "name", e.target.value)}
-                  className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-teal-500 focus:outline-none"
-                  placeholder="Nome do Jogador"
+                  onChange={(e) => isCurrent && updateSubstitute(index, "name", e.target.value)}
+                  className="flex-1"
+                  placeholder="Nome do Reserva"
                 />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  onClick={() => isCurrent && removeSubstitute(index)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
             ))}
           </div>
-          <button
+          
+          <Button
             type="button"
-            onClick={addSubstitute}
-            className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-teal-500 hover:text-teal-500 transition-colors font-medium"
+            variant="outline"
+            className="w-full border-dashed hover:border-primary hover:text-primary transition-colors"
+            onClick={() => isCurrent && addSubstitute()}
           >
-            + Adicionar Reserva
-          </button>
+            <Plus className="w-4 h-4 mr-2" /> Adicionar Reserva
+          </Button>
         </div>
-
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          className="w-full bg-teal-500 hover:bg-teal-600 text-white text-xl font-semibold py-4 rounded-xl transition-colors shadow-lg"
-        >
-          Salvar Times e Iniciar Jogo
-        </button>
       </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-muted/40 p-4 md:p-8 relative">
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="absolute top-4 left-4 md:top-8 md:left-8 hover:bg-background/50 z-10"
+        onClick={() => router.back()}
+        title="Voltar"
+      >
+        <ArrowLeft className="w-6 h-6" />
+      </Button>
+
+      <Card className="w-full max-w-2xl shadow-lg animate-in fade-in zoom-in-95 duration-300">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto bg-muted w-12 h-12 rounded-full flex items-center justify-center mb-2">
+            <User className="w-6 h-6 text-muted-foreground" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Escalação dos Times</CardTitle>
+          <CardDescription>
+            A ordem abaixo definirá o rodízio do saque.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="p-6">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "A" | "B")} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger 
+                value="A" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all font-semibold"
+              >
+                {teamAName}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="B"
+                className="data-[state=active]:bg-orange-500 data-[state=active]:text-white transition-all font-semibold"
+              >
+                {teamBName}
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="A" className="mt-0">
+              {renderTeamForm("A")}
+            </TabsContent>
+            
+            <TabsContent value="B" className="mt-0">
+              {renderTeamForm("B")}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+
+        <CardFooter className="p-6 pt-2 bg-muted/20 border-t rounded-b-xl">
+          <Button 
+            onClick={handleSave} 
+            size="lg" 
+            className="w-full text-lg h-12 font-semibold shadow-md hover:shadow-lg transition-all"
+          >
+            <Play className="w-5 h-5 mr-2 fill-current" />
+            Iniciar Jogo
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   )
 }
