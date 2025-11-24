@@ -59,17 +59,21 @@ export default function CampeonatoSetup() {
   }
 
   const handleSave = () => {
-    // --- MUDANÇA AQUI ---
-    // Adicionado gameType: "championship"
+    // Captura o número do jogador selecionado para o saque inicial
+    // Se o campo estiver vazio, enviamos "0" ou um valor padrão
+    const serverANumber = teamA.starters[teamA.firstServer].number || "?"
+    const serverBNumber = teamB.starters[teamB.firstServer].number || "?"
+
     const params = new URLSearchParams({
       teamA: teamAName,
       teamB: teamBName,
       numSets: numSets,
       pointsPerSet: pointsPerSet,
       gameType: "championship",
+      serverA: serverANumber, // Envia sacador A
+      serverB: serverBNumber, // Envia sacador B
     })
     router.push(`/scoreboard?${params.toString()}`)
-    // --- FIM DA MUDANÇA ---
   }
 
   return (

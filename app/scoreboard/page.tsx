@@ -1,20 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-// --- MUDANÇA AQUI ---
-// 1. Importar o ícone de 'Refresh' (Reiniciar)
 import { RefreshCcw } from "lucide-react"
 
 export default function Scoreboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  
+  // Recupera os dados da URL
   const teamAName = searchParams.get("teamA") || "Time A"
   const teamBName = searchParams.get("teamB") || "Time B"
   const targetScore = parseInt(searchParams.get("pointsPerSet") || "25", 10)
   const maxSets = parseInt(searchParams.get("numSets") || "5", 10)
-  const setsToWin = Math.ceil(maxSets / 2)
   const gameType = searchParams.get("gameType") || "quick"
+  
+  // Recupera os sacadores iniciais passados pela tela de campeonato
+  const initialServerA = searchParams.get("serverA") || "0"
+  const initialServerB = searchParams.get("serverB") || "0"
+
+  const setsToWin = Math.ceil(maxSets / 2)
 
   const [isGameFinished, setIsGameFinished] = useState(false)
   const [scoreA, setScoreA] = useState(0)
@@ -22,13 +27,12 @@ export default function Scoreboard() {
   const [setsA, setSetsA] = useState(0)
   const [setsB, setSetsB] = useState(0)
   const [servingTeam, setServingTeam] = useState<"A" | "B">("A")
-  const [serverNumberA, setServerNumberA] = useState(7)
-  const [serverNumberB, setServerNumberB] = useState(3)
+  
+  // Estado para os números dos sacadores
+  const [serverNumberA, setServerNumberA] = useState(initialServerA)
+  const [serverNumberB, setServerNumberB] = useState(initialServerB)
 
-  // --- MUDANÇA AQUI ---
-  // 2. Estado para controlar o modal de reinicialização
   const [showResetModal, setShowResetModal] = useState(false)
-  // --- FIM DA MUDANÇA ---
 
   const checkWinCondition = (scoreA: number, scoreB: number, target: number) => {
     const teamAWon = scoreA >= target && scoreA - scoreB >= 2
@@ -86,8 +90,6 @@ export default function Scoreboard() {
     setScoreB(0)
   }
 
-  // --- NOVAS FUNÇÕES ---
-  // 3. Função para reiniciar apenas os pontos do set atual
   const handleResetSet = () => {
     const confirmed = window.confirm(
       "Tem certeza que deseja reiniciar a contagem deste set?\nOs pontos voltarão a 0-0."
@@ -96,10 +98,9 @@ export default function Scoreboard() {
       setScoreA(0)
       setScoreB(0)
     }
-    setShowResetModal(false) // Fecha o modal independentemente da escolha
+    setShowResetModal(false)
   }
 
-  // 4. Função para reiniciar a partida inteira
   const handleResetMatch = () => {
     const confirmed = window.confirm(
       "TEM CERTEZA QUE DESEJA REINICIAR A PARTIDA?\nTodo o progresso (sets e pontos) será perdido."
@@ -111,14 +112,12 @@ export default function Scoreboard() {
       setSetsB(0)
       setIsGameFinished(false)
     }
-    setShowResetModal(false) // Fecha o modal independentemente da escolha
+    setShowResetModal(false)
   }
-  // --- FIM DAS NOVAS FUNÇÕES ---
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center relative">
-      {/* --- MUDANÇA AQUI --- */}
-      {/* 5. Agrupar botões de Voltar e Reiniciar */}
+      {/* Botão Voltar e Reiniciar */}
       <div className="absolute top-4 left-4 z-10 flex gap-2">
         <button
           onClick={() => router.push("/")}
@@ -127,18 +126,17 @@ export default function Scoreboard() {
           ← Voltar
         </button>
         <button
-          onClick={() => setShowResetModal(true)} // Abre o modal
+          onClick={() => setShowResetModal(true)}
           className="text-white/70 hover:text-white text-sm p-2 bg-gray-900/50 rounded-md"
           aria-label="Reiniciar partida"
         >
           <RefreshCcw size={16} />
         </button>
       </div>
-      {/* --- FIM DA MUDANÇA --- */}
 
-      {/* Main scoreboard container */}
+      {/* Placar Principal */}
       <div className="w-full h-screen flex">
-        {/* Team A - Left Side (Blue) */}
+        {/* Time A - Esquerda (Azul) */}
         <div className="flex-1 flex flex-col items-center justify-center bg-black border-r-4 border-blue-500">
           <h2 className="text-white text-3xl font-bold mb-2">{teamAName}</h2>
           <div
@@ -166,7 +164,7 @@ export default function Scoreboard() {
           </div>
         </div>
 
-        {/* Team B - Right Side (Orange) */}
+        {/* Time B - Direita (Laranja) */}
         <div className="flex-1 flex flex-col items-center justify-center bg-black border-l-4 border-orange-500">
           <h2 className="text-white text-3xl font-bold mb-2">{teamBName}</h2>
           <div
@@ -195,7 +193,7 @@ export default function Scoreboard() {
         </div>
       </div>
 
-      {/* Sets Counter - Center */}
+      {/* Contador de Sets - Centro */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl border border-gray-700 w-80 sm:w-96">
         <div className="text-center">
           <div className="flex items-center justify-between text-2xl font-bold mb-1">
@@ -229,16 +227,15 @@ export default function Scoreboard() {
         </div>
       </div>
 
-      {/* --- MUDANÇA AQUI --- */}
-      {/* 6. Modal de Reinicialização */}
+      {/* Modal de Reinicialização */}
       {showResetModal && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={() => setShowResetModal(false)} // Fecha o modal ao clicar fora
+          onClick={() => setShowResetModal(false)}
         >
           <div
             className="bg-gray-800 text-white rounded-2xl p-8 max-w-sm w-full shadow-2xl border border-gray-700"
-            onClick={(e) => e.stopPropagation()} // Impede de fechar ao clicar dentro
+            onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-bold text-center mb-6">Reiniciar</h2>
             <div className="flex flex-col gap-4">
@@ -264,7 +261,6 @@ export default function Scoreboard() {
           </div>
         </div>
       )}
-      {/* --- FIM DA MUDANÇA --- */}
     </div>
   )
 }
